@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.1.5
+
+Stable display refresh and correct A/B firmware validation.
+
+### Fixed
+
+- **The display was phase-locked between 30 and 60 fps.** The HX83112B
+  panel needs the DSI video-mode flag; without it the MSM display stack
+  classified the interface as command-mode and selected a different
+  completion path for presentation. The panel is now identified as
+  video-mode, giving stable DRM rendering. Emerge's rust-skia NIF also
+  gained its direct runtime dependencies — Freedreno libdrm, Fontconfig,
+  FreeType — alongside the GBM/EGL/GLES libraries Mesa already provides.
+
+- **A/B firmware validation didn't account for the FP3's nested slot
+  layout.** The root filesystem is a device-mapper subpartition inside
+  Android's userdata partition, so erlinit cannot infer its parent
+  firmware device from `/dev/rootdisk0` alone; the initramfs now
+  publishes that symlink while the base device is still known, giving
+  `nerves_runtime` a usable target for `ops.fw`. Validation is tracked
+  per slot instead of one global flag: an upgrade destination is marked
+  invalid before it's written, only the active slot is validated, and
+  the legacy global flag is dropped after a successful transition.
+  Complete images still start with slot A validated, since no fallback
+  firmware exists yet.
+
+### Changed
+
+- Kernel pinned past upstream's own DSI video-mode fix for the HX83112B
+  panel, dropping the local patch now that the same fix landed directly
+  in linux-msm8953.
+- Development toolchain bumped to Erlang 28.5 / Elixir 1.20.2-otp-28.
+
 ## v0.1.4
 
 Fixes the Venus wedge that could kill video encode and decode until
